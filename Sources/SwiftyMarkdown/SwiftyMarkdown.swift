@@ -61,9 +61,11 @@ enum MarkdownLineStyle : LineStyling {
     case unorderedList
 	case unorderedListIndentFirstOrder
 	case unorderedListIndentSecondOrder
+    case unorderedListIndentThirdOrder
     case orderedList
 	case orderedListIndentFirstOrder
 	case orderedListIndentSecondOrder
+    case orderedListIndentThirdOrder
 	case referencedLink
 	
     func styleIfFoundStyleAffectsPreviousLine() -> LineStyling? {
@@ -158,14 +160,14 @@ If that is not set, then the system default will be used.
 	static public var lineRules = [
 		LineRule(token: "=", type: MarkdownLineStyle.previousH1, removeFrom: .entireLine, changeAppliesTo: .previous),
 		LineRule(token: "-", type: MarkdownLineStyle.previousH2, removeFrom: .entireLine, changeAppliesTo: .previous),
-		LineRule(token: "\t\t\t- ", type: MarkdownLineStyle.unorderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
+		LineRule(token: "\t\t\t- ", type: MarkdownLineStyle.unorderedListIndentThirdOrder, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: "\t\t- ", type: MarkdownLineStyle.unorderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: "\t- ", type: MarkdownLineStyle.unorderedListIndentFirstOrder, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: "- ",type : MarkdownLineStyle.unorderedList, removeFrom: .leading),
-		LineRule(token: "\t\t\t* ", type: MarkdownLineStyle.unorderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
+		LineRule(token: "\t\t\t* ", type: MarkdownLineStyle.unorderedListIndentThirdOrder, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: "\t\t* ", type: MarkdownLineStyle.unorderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: "\t* ", type: MarkdownLineStyle.unorderedListIndentFirstOrder, removeFrom: .leading, shouldTrim: false),
-		LineRule(token: "\t\t\t1. ", type: MarkdownLineStyle.orderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
+		LineRule(token: "\t\t\t1. ", type: MarkdownLineStyle.orderedListIndentThirdOrder, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: "\t\t1. ", type: MarkdownLineStyle.orderedListIndentSecondOrder, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: "\t1. ", type: MarkdownLineStyle.orderedListIndentFirstOrder, removeFrom: .leading, shouldTrim: false),
 		LineRule(token: "1. ",type : MarkdownLineStyle.orderedList, removeFrom: .leading),
@@ -266,6 +268,8 @@ If that is not set, then the system default will be used.
 	var orderedListCount = 0
 	var orderedListIndentFirstOrderCount = 0
 	var orderedListIndentSecondOrderCount = 0
+    var orderedListIndentThirdOrderCount = 0
+
 	
 	var previouslyFoundTokens : [Token] = []
 	
@@ -462,24 +466,34 @@ extension SwiftyMarkdown {
 			self.orderedListCount += 1
 			self.orderedListIndentFirstOrderCount = 0
 			self.orderedListIndentSecondOrderCount = 0
+            self.orderedListIndentThirdOrderCount = 0
 			listItem = "\(self.orderedListCount)."
 		case .orderedListIndentFirstOrder, .unorderedListIndentFirstOrder:
 			self.orderedListIndentFirstOrderCount += 1
 			self.orderedListIndentSecondOrderCount = 0
+            self.orderedListIndentThirdOrderCount = 0
 			if markdownLineStyle == .orderedListIndentFirstOrder {
 				listItem = "\(self.orderedListIndentFirstOrderCount)."
 			}
 			
 		case .orderedListIndentSecondOrder, .unorderedListIndentSecondOrder:
 			self.orderedListIndentSecondOrderCount += 1
+            self.orderedListIndentThirdOrderCount = 0
 			if markdownLineStyle == .orderedListIndentSecondOrder {
 				listItem = "\(self.orderedListIndentSecondOrderCount)."
 			}
+            
+        case .orderedListIndentThirdOrder, .unorderedListIndentThirdOrder:
+            self.orderedListIndentThirdOrderCount += 1
+            if markdownLineStyle == .orderedListIndentThirdOrder {
+                listItem = "\(self.orderedListIndentThirdOrderCount)."
+            }
 			
 		default:
 			self.orderedListCount = 0
 			self.orderedListIndentFirstOrderCount = 0
 			self.orderedListIndentSecondOrderCount = 0
+            self.orderedListIndentThirdOrderCount = 0
 		}
 
 		let lineProperties : LineProperties
@@ -507,7 +521,7 @@ extension SwiftyMarkdown {
 			paragraphStyle.firstLineHeadIndent = 20.0
 			paragraphStyle.headIndent = 20.0
 			attributes[.paragraphStyle] = paragraphStyle
-		case .unorderedList, .unorderedListIndentFirstOrder, .unorderedListIndentSecondOrder, .orderedList, .orderedListIndentFirstOrder, .orderedListIndentSecondOrder:
+        case .unorderedList, .unorderedListIndentFirstOrder, .unorderedListIndentSecondOrder, .unorderedListIndentThirdOrder, .orderedList, .orderedListIndentFirstOrder, .orderedListIndentSecondOrder, .orderedListIndentThirdOrder:
 			
 			let interval : CGFloat = 30
 			var addition = interval
@@ -519,6 +533,9 @@ extension SwiftyMarkdown {
 			case .unorderedListIndentSecondOrder, .orderedListIndentSecondOrder:
 				addition = interval * 3
 				indent = "\t\t"
+            case .unorderedListIndentThirdOrder, .orderedListIndentThirdOrder:
+                addition = interval * 4
+                indent = "\t\t\t"
 			default:
 				break
 			}
